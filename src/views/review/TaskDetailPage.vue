@@ -114,6 +114,9 @@
               <el-radio-button value="llm">
                 语义 ({{ llmIssues.length }})
               </el-radio-button>
+              <el-radio-button value="comparison" v-if="abnormalComparisons.length > 0">
+                知识库 ({{ abnormalComparisons.length }})
+              </el-radio-button>
             </el-radio-group>
           </div>
 
@@ -176,6 +179,82 @@
             </template>
           </el-table-column>
         </el-table>
+      </el-card>
+
+      <!-- 知识库对比异常 -->
+      <el-card v-if="abnormalComparisons.length > 0" style="margin-top: 16px;">
+        <template #header>
+          <div class="panel-header">
+            <span>知识库对比异常</span>
+            <el-tag size="small" type="warning">{{ abnormalComparisons.length }} 项</el-tag>
+          </div>
+        </template>
+        <el-table :data="abnormalComparisons" size="small" max-height="300">
+          <el-table-column prop="item" label="对比项" width="150" />
+          <el-table-column prop="current_value" label="当前值" width="100">
+            <template #default="{ row }">
+              {{ typeof row.current_value === 'number' ? row.current_value.toFixed(2) : row.current_value }}
+            </template>
+          </el-table-column>
+          <el-table-column label="知识库范围" width="180">
+            <template #default="{ row }">
+              <span class="kb-range">
+                {{ row.kb_min?.toFixed(2) }} ~ {{ row.kb_max?.toFixed(2) }}
+              </span>
+              <span class="kb-avg">(均值: {{ row.kb_avg?.toFixed(2) }})</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="description" label="说明" min-width="200">
+            <template #default="{ row }">
+              <el-text type="warning" size="small">{{ row.description }}</el-text>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+
+      <!-- 相似案例参考 -->
+      <el-card v-if="similarCases.length > 0" style="margin-top: 16px;">
+        <template #header>
+          <div class="panel-header">
+            <span>相似案例参考</span>
+            <el-tag size="small" type="info">{{ similarCases.length }} 个</el-tag>
+          </div>
+        </template>
+        <el-table :data="similarCases.slice(0, 5)" size="small">
+          <el-table-column label="地址" min-width="200">
+            <template #default="{ row }">
+              {{ row.address?.value || row.address || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="面积(㎡)" width="100">
+            <template #default="{ row }">
+              {{ row.building_area?.value || row.area || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="价格(元/㎡)" width="120">
+            <template #default="{ row }">
+              {{ (row.transaction_price?.value || row.rental_price?.value || row.price || 0).toFixed(0) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="区域" width="100">
+            <template #default="{ row }">
+              {{ row.district || '-' }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+
+      <!-- 审查建议 -->
+      <el-card v-if="recommendations.length > 0" style="margin-top: 16px;">
+        <template #header>
+          <span>审查建议</span>
+        </template>
+        <ul class="recommendations-list">
+          <li v-for="(rec, idx) in recommendations" :key="idx">
+            <el-icon><Sunny /></el-icon>
+            {{ rec }}
+          </li>
+        </ul>
       </el-card>
     </template>
 
@@ -242,6 +321,22 @@ const llmIssues = computed(() => {
   }))
 })
 
+const comparisons = computed(() => {
+  return task.value?.result?.comparisons || []
+})
+
+const abnormalComparisons = computed(() => {
+  return comparisons.value.filter((item: any) => item.is_abnormal)
+})
+
+const similarCases = computed(() => {
+  return task.value?.result?.similar_cases || []
+})
+
+const recommendations = computed(() => {
+  return task.value?.result?.recommendations || []
+})
+
 const allIssues = computed(() => {
   return [...validationIssues.value, ...llmIssues.value]
 })
@@ -249,6 +344,18 @@ const allIssues = computed(() => {
 const filteredIssues = computed(() => {
   if (issueTab.value === 'validation') return validationIssues.value
   if (issueTab.value === 'llm') return llmIssues.value
+  if (issueTab.value === 'comparison') {
+    // 将 comparisons 转换为类似 issue 的格式
+    return abnormalComparisons.value.map((item: any, idx: number) => ({
+      _type: 'comparison',
+      _idx: idx,
+      level: 'warning',
+      category: 'kb_comparison',
+      type: '知识库对比',
+      severity: 'warning',
+      description: item.description || `${item.item}: ${item.current_value}，知识库范围${item.kb_min?.toFixed(2)} ~ ${item.kb_max?.toFixed(2)}`,
+    }))
+  }
   return allIssues.value
 })
 
@@ -537,6 +644,42 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 4px;
+}
+
+/* 知识库对比样式 */
+.kb-range {
+  color: #409eff;
+  font-family: monospace;
+}
+
+.kb-avg {
+  color: #909399;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+/* 建议列表样式 */
+.recommendations-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recommendations-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  color: #67c23a;
+  border-bottom: 1px dashed #ebeef5;
+}
+
+.recommendations-list li:last-child {
+  border-bottom: none;
+}
+
+.recommendations-list .el-icon {
+  color: #e6a23c;
 }
 
 /* 滚动条美化 */

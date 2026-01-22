@@ -229,6 +229,28 @@ export interface BatchReviewResult {
 
 // ==================== 异步任务相关 ====================
 
+// 知识库对比结果
+export interface ComparisonResult {
+  item: string
+  current_value: number
+  kb_min: number
+  kb_max: number
+  kb_avg: number
+  is_abnormal: boolean
+  description: string
+}
+
+// 相似案例
+export interface SimilarCase {
+  case_id: string
+  address: string
+  area: number
+  price: number
+  district?: string
+  usage?: string
+  score?: number
+}
+
 // 审查任务
 export interface ReviewTask {
   task_id: string
@@ -259,7 +281,11 @@ export interface ReviewTask {
       description: string
       suggestion: string
       paragraph_index?: number
+      span?: string
     }>
+    comparisons?: ComparisonResult[]
+    similar_cases?: SimilarCase[]
+    recommendations?: string[]
     extraction?: any
   }
   error?: string
