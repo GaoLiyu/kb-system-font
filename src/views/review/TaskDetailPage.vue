@@ -161,17 +161,91 @@
       <!-- 公式校验（如果有） -->
       <el-card v-if="task.result?.formula_checks?.length" style="margin-top: 16px;">
         <template #header>
-          <span>公式校验</span>
+          <div class="panel-header">
+            <span>反算验证</span>
+            <el-tag size="small" :type="hasFormulaErrors ? 'danger' : 'success'">
+              {{ formulaCheckSummary }}
+            </el-tag>
+          </div>
         </template>
-        <el-table :data="task.result.formula_checks" size="small" max-height="200">
-          <el-table-column prop="case_id" label="案例" width="100" />
-          <el-table-column prop="expected" label="预期值" width="120">
-            <template #default="{ row }">{{ row.expected?.toFixed(2) }}</template>
+
+        <el-table :data="task.result.formula_checks" size="small" max-height="300">
+          <!-- 案例编号 -->
+          <el-table-column prop="case_id" label="案例" width="80" fixed />
+
+          <!-- 【新增】公式名称 -->
+          <el-table-column prop="formula_name" label="验证公式" min-width="180">
+            <template #default="{ row }">
+              <el-tooltip
+                :content="getFormulaDescription(row.formula_name)"
+                placement="top"
+                :disabled="!getFormulaDescription(row.formula_name)"
+              >
+                <span class="formula-name">{{ row.formula_name }}</span>
+              </el-tooltip>
+            </template>
           </el-table-column>
-          <el-table-column prop="actual" label="实际值" width="120">
-            <template #default="{ row }">{{ row.actual?.toFixed(2) }}</template>
+
+          <!-- 【新增】输入参数（展开查看） -->
+          <el-table-column label="计算参数" width="100">
+            <template #default="{ row }">
+              <el-popover
+                placement="left"
+                :width="400"
+                trigger="click"
+                v-if="row.inputs || row.formula_detail"
+              >
+                <template #reference>
+                  <el-button type="primary" link size="small">
+                    <el-icon><View /></el-icon>
+                    查看
+                  </el-button>
+                </template>
+                <div class="formula-detail">
+                  <h4>计算详情</h4>
+                  <div v-if="row.formula_detail" class="formula-expression">
+                    {{ row.formula_detail }}
+                  </div>
+                  <el-descriptions :column="2" size="small" border v-if="row.inputs">
+                    <el-descriptions-item
+                      v-for="(val, key) in row.inputs"
+                      :key="key"
+                      :label="formatInputLabel(key)"
+                    >
+                      {{ formatInputValue(val) }}
+                    </el-descriptions-item>
+                  </el-descriptions>
+                </div>
+              </el-popover>
+              <span v-else class="text-muted">-</span>
+            </template>
           </el-table-column>
-          <el-table-column prop="is_valid" label="结果" width="80">
+
+          <!-- 预期值 -->
+          <el-table-column prop="expected" label="理论值" width="120" align="right">
+            <template #default="{ row }">
+              <span class="number">{{ formatNumber(row.expected) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 实际值 -->
+          <el-table-column prop="actual" label="实际值" width="120" align="right">
+            <template #default="{ row }">
+              <span class="number">{{ formatNumber(row.actual) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 【新增】差异值 -->
+          <el-table-column prop="difference" label="差异" width="100" align="right">
+            <template #default="{ row }">
+              <span :class="['difference', row.is_valid ? '' : 'error']">
+                {{ row.difference !== undefined ? formatNumber(row.difference) : formatNumber(Math.abs(row.expected - row.actual)) }}
+              </span>
+            </template>
+          </el-table-column>
+
+          <!-- 结果 -->
+          <el-table-column prop="is_valid" label="结果" width="80" align="center" fixed="right">
             <template #default="{ row }">
               <el-tag :type="row.is_valid ? 'success' : 'danger'" size="small">
                 {{ row.is_valid ? '通过' : '异常' }}
@@ -179,6 +253,21 @@
             </template>
           </el-table-column>
         </el-table>
+
+        <!-- 【新增】公式说明 -->
+        <div class="formula-legend" v-if="task.result.report_type">
+          <el-divider content-position="left">公式说明</el-divider>
+          <div class="legend-content">
+            <template v-if="task.result.report_type === 'biaozhunfang'">
+              <p><strong>比准价格</strong> = Vs × P1 × P2 × P3 × P4 - Va - Vb</p>
+              <p class="legend-desc">其中：Vs=可比实例成交价，P1=交易情况修正，P2=交易日期修正，P3=实体因素修正，P4=区位状况修正，Va=附属物单价，Vb=装修重置价</p>
+              <p><strong>P3(实体因素)</strong> = 结构系数 × 楼层系数 × 朝向系数 × 成新系数 × 东西至修正</p>
+            </template>
+            <template v-else>
+              <p><strong>修正后单价</strong> = 成交价 × 交易情况 × 市场状况 × 区位修正 × 实物修正 × 权益修正</p>
+            </template>
+          </div>
+        </div>
       </el-card>
 
       <!-- 知识库对比异常 -->
@@ -265,7 +354,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Download, ChatLineRound, Sunny } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, ChatLineRound, Sunny, View } from '@element-plus/icons-vue'
 import { getTaskStatus, exportTaskResult, downloadBlob } from '@/api'
 import type { ReviewTask } from '@/types'
 import { ElMessage } from 'element-plus'
@@ -336,6 +425,83 @@ const similarCases = computed(() => {
 const recommendations = computed(() => {
   return task.value?.result?.recommendations || []
 })
+
+// 是否有公式错误
+const hasFormulaErrors = computed(() => {
+  const checks = task.value?.result?.formula_checks || []
+  return checks.some((c: any) => !c.is_valid)
+})
+
+// 公式校验汇总
+const formulaCheckSummary = computed(() => {
+  const checks = task.value?.result?.formula_checks || []
+  const total = checks.length
+  const passed = checks.filter((c: any) => c.is_valid).length
+  const failed = total - passed
+  if (failed === 0) {
+    return `全部通过 (${total}项)`
+  }
+  return `${failed}项异常 / ${total}项`
+})
+
+// 格式化数字
+function formatNumber(num: any): string {
+  if (num === undefined || num === null) return '-'
+  if (typeof num !== 'number') return String(num)
+  // 大于1000的数字加千分位
+  if (Math.abs(num) >= 1000) {
+    return num.toLocaleString('zh-CN', { maximumFractionDigits: 2 })
+  }
+  return num.toFixed(4).replace(/\\.?0+$/, '')
+}
+
+// 获取公式描述
+function getFormulaDescription(name: string): string {
+  const descriptions: Record<string, string> = {
+    '比准价格(VsxP1xP2xP3xP4-Va-Vb)': '标准房比较法核心公式：可比实例成交价经过四项修正后减去附属物和装修价值',
+    '修正后单价': '涉执/租金报告修正公式：成交价乘以五项修正系数',
+    'P3实体修正': 'P3由结构、楼层、朝向、成新、东西至五个子系数相乘得出',
+  }
+  return descriptions[name] || ''
+}
+
+// 格式化输入参数标签
+function formatInputLabel(key: string): string {
+  const labels: Record<string, string> = {
+    vs: 'Vs(成交价)',
+    p1: 'P1(交易情况)',
+    p2: 'P2(交易日期)',
+    p3: 'P3(实体修正)',
+    p4: 'P4(区位修正)',
+    va: 'Va(附属物)',
+    vb: 'Vb(装修)',
+    sf: '结构系数',
+    ff: '楼层系数',
+    of: '朝向系数',
+    af: '成新系数',
+    ew: '东西至修正',
+    tc: '交易情况',
+    mc: '市场状况',
+    lc: '区位修正',
+    pc: '实物修正',
+    rc: '权益修正',
+    trans: '成交价',
+  }
+  return labels[key] || key
+}
+
+// 格式化输入参数值
+function formatInputValue(val: any): string {
+  if (val === undefined || val === null) return '-'
+  if (typeof val === 'number') {
+    return formatNumber(val)
+  }
+  // 如果是对象（如 {raw: '108/103', value: 1.0485}）
+  if (typeof val === 'object' && val.raw) {
+    return val.value ? `${val.raw} (=${val.value.toFixed(4)})` : val.raw
+  }
+  return String(val)
+}
 
 const allIssues = computed(() => {
   return [...validationIssues.value, ...llmIssues.value]
@@ -697,5 +863,65 @@ onMounted(() => {
 .content-scroll::-webkit-scrollbar-thumb:hover,
 .issues-scroll::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
+}
+
+.formula-name {
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: #409eff;
+}
+
+.formula-detail {
+  padding: 8px;
+}
+
+.formula-detail h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #303133;
+}
+
+.formula-expression {
+  background: #f5f7fa;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
+.number {
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.difference {
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.difference.error {
+  color: #f56c6c;
+  font-weight: 500;
+}
+
+.text-muted {
+  color: #909399;
+}
+
+.formula-legend {
+  margin-top: 16px;
+}
+
+.legend-content {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.8;
+}
+
+.legend-content p {
+  margin: 4px 0;
+}
+
+.legend-desc {
+  color: #909399;
+  font-size: 12px;
 }
 </style>
