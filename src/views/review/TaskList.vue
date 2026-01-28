@@ -27,10 +27,10 @@
           </el-upload>
 
           <div style="margin-top: 16px;">
-            <el-radio-group v-model="reviewMode" style="margin-bottom: 12px;">
-              <el-radio-button value="quick">快速审查</el-radio-button>
-              <el-radio-button value="full">完整审查</el-radio-button>
-            </el-radio-group>
+<!--            <el-radio-group v-model="reviewMode" style="margin-bottom: 12px;">-->
+<!--              <el-radio-button value="quick">快速审查</el-radio-button>-->
+<!--              <el-radio-button value="full">完整审查</el-radio-button>-->
+<!--            </el-radio-group>-->
 
             <el-button
               type="primary"
@@ -215,7 +215,7 @@ const router = useRouter()
 
 // 状态
 const fileList = ref<any[]>([])
-const reviewMode = ref('quick')
+const reviewMode = ref('full')
 const submitting = ref(false)
 
 const loading = ref(false)

@@ -51,6 +51,7 @@ export const menuConfig: MenuItem[] = [
     id: 'review',
     title: '报告审查',
     icon: 'DocumentChecked',
+    permission: 'review:view',
     children: [
       {
         id: 'review-tasks',
@@ -78,6 +79,7 @@ export const menuConfig: MenuItem[] = [
     title: '系统管理',
     icon: 'Setting',
     roles: ['admin', 'super_admin'],
+    permission: 'system:audit',
     children: [
       {
         id: 'system-users',

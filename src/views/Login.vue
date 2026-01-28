@@ -69,11 +69,11 @@
           </el-form-item>
         </el-form>
 
-        <div class="login-tips">
-          <el-text type="info" size="small">
-            默认管理员: admin / admin123
-          </el-text>
-        </div>
+<!--        <div class="login-tips">-->
+<!--          <el-text type="info" size="small">-->
+<!--            默认管理员: admin / admin123-->
+<!--          </el-text>-->
+<!--        </div>-->
       </div>
 
       <!-- 版本信息 -->

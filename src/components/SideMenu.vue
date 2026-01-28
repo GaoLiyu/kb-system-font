@@ -7,7 +7,7 @@
     text-color="#bfcbd9"
     active-text-color="#409EFF"
   >
-    <template v-for="menu in menuConfig" :key="menu.id">
+    <template v-for="menu in filteredMenus" :key="menu.id">
       <!-- 有子菜单 -->
       <el-sub-menu v-if="menu.children && menu.children.length" :index="menu.id">
         <template #title>
@@ -41,8 +41,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { menuConfig } from '@/config/menu.ts'
+import { filterMenuByPermission, menuConfig } from '@/config/menu.ts'
 import { iconMap } from "@/config/icons.ts";
+import { useUserStore } from '@/stores/user'
 
 interface Props {
   collapsed?: boolean
@@ -51,6 +52,7 @@ interface Props {
 defineProps<Props>()
 
 const route = useRoute()
+const userStore = useUserStore()
 
 // 计算当前激活的菜单
 const activeMenu = computed(() => {
@@ -60,6 +62,14 @@ const activeMenu = computed(() => {
   if (path.startsWith('/kb/cases/')) return '/kb/cases'
   if (path.startsWith('/review/tasks/')) return '/review/tasks'
   return path
+})
+
+const filteredMenus = computed(() => {
+  return filterMenuByPermission(
+    menuConfig,
+    (permission: string) => userStore.hasPermission(permission),
+    (roles: string[]) => userStore.hasAnyRole(roles)
+  )
 })
 </script>
 
