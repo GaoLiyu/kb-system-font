@@ -6,7 +6,7 @@
         <div class="logo-icon">
           <el-icon :size="48" color="#409EFF"><HomeFilled /></el-icon>
         </div>
-        <h1 class="title">{{ systemConfig?.system?.name || '房地产估价知识库系统' }}</h1>
+        <h1 class="title">{{ systemConfig?.system?.name || '内部测试系统' }}</h1>
         <p class="subtitle">{{ systemConfig?.system?.description || '' }}</p>
       </div>
 

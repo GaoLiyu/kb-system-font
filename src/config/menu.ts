@@ -59,12 +59,12 @@ export const menuConfig: MenuItem[] = [
         path: '/review/tasks',
         permission: 'review:view',
       },
-      {
-        id: 'review-instant',
-        title: '即时审查',
-        path: '/review/instant',
-        permission: 'review:submit',
-      },
+//       {
+//         id: 'review-instant',
+//         title: '即时审查',
+//         path: '/review/instant',
+//         permission: 'review:submit',
+//       },
     ],
   },
   {

@@ -4,7 +4,7 @@
     <el-aside :width="sidebarWidth" class="app-sidebar">
       <div class="logo" @click="router.push('/')">
 <!--        <img src="@/assets/logo.svg" alt="Logo" class="logo-img" v-if="!collapsed" />-->
-        <h1 v-if="!collapsed">估价知识库</h1>
+        <h1 v-if="!collapsed">内部测试</h1>
         <h1 v-else>KB</h1>
       </div>
 
@@ -39,6 +39,38 @@
           <el-tooltip content="全屏" placement="bottom">
             <el-icon class="header-icon" @click="toggleFullscreen"><FullScreen /></el-icon>
           </el-tooltip>
+          <el-dropdown trigger="click" @command="handleCommand">
+        <span class="user-dropdown">
+          <el-avatar :size="32" icon="UserFilled" />
+          <!-- <span class="username">{{ userStore.userInfo?.username || '用户' }}</span> -->
+          <!-- <el-icon><ArrowDown /></el-icon> -->
+        </span>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item disabled>
+              <el-icon><UserFilled /></el-icon>
+              {{ userStore.userInfo?.username }}
+            </el-dropdown-item>
+            <el-dropdown-item disabled>
+              <el-tag size="small" type="info">
+                {{ getRoleLabel(userStore.roles[0]) }}
+              </el-tag>
+            </el-dropdown-item>
+            <el-dropdown-item divided command="profile">
+              <el-icon><Setting /></el-icon>
+              个人设置
+            </el-dropdown-item>
+            <el-dropdown-item command="changePassword">
+              <el-icon><Key /></el-icon>
+              修改密码
+            </el-dropdown-item>
+            <el-dropdown-item divided command="logout">
+              <el-icon><SwitchButton /></el-icon>
+              退出登录
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
         </div>
       </el-header>
 
@@ -57,12 +89,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Fold, Expand, Refresh, FullScreen } from '@element-plus/icons-vue'
+import { Fold, Expand, ArrowDown, UserFilled, Setting, Key, SwitchButton, Refresh, FullScreen } from '@element-plus/icons-vue'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import SideMenu from '@/components/SideMenu.vue'
 import { getBreadcrumb } from '@/config/menu'
+import { useUserStore } from "@/stores";
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 // 侧边栏折叠
 const collapsed = ref(false)
@@ -84,6 +119,55 @@ function toggleFullscreen() {
     document.documentElement.requestFullscreen()
   } else {
     document.exitFullscreen()
+  }
+}
+
+// 角色标签
+const roleLabels: Record<string, string> = {
+  'super_admin': '超级管理员',
+  'admin': '管理员',
+  'reviewer': '审查员',
+  'editor': '编辑员',
+  'viewer': '只读用户',
+}
+
+function getRoleLabel(role: string): string {
+  return roleLabels[role] || role
+}
+
+// 处理下拉菜单命令
+async function handleCommand(command: string) {
+  switch (command) {
+    case 'profile':
+      router.push('/profile')
+      break
+    case 'changePassword':
+      router.push('/change-password')
+      break
+    case 'logout':
+      handleLogout()
+      break
+  }
+}
+
+// 退出登录
+async function handleLogout() {
+  try {
+    await ElMessageBox.confirm(
+      '确定要退出登录吗？',
+      '退出确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+
+    await userStore.logout()
+    ElMessage.success('已退出登录')
+    router.push('/login')
+  } catch {
+    // 用户取消
   }
 }
 </script>

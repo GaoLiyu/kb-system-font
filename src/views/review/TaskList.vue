@@ -107,11 +107,11 @@
             </div>
           </template>
 
-          <el-table :data="tasks" v-loading="loading" stripe>
+          <el-table :data="tasks" v-loading="loading" stripe min-height="600">
             <el-table-column prop="filename" label="文件名" show-overflow-tooltip min-width="180" />
             <el-table-column prop="review_mode" label="模式" width="80">
               <template #default="{ row }">
-                <el-tag size="small" :type="row.review_mode === 'full' ? 'primary' : 'info'">
+                <el-tag size="small" :type="row.review_mode === 'full' ? 'primary' : 'info'">f
                   {{ row.review_mode === 'full' ? '完整' : '快速' }}
                 </el-tag>
               </template>
@@ -417,6 +417,7 @@ onUnmounted(() => {
 <style scoped>
 .task-list-page {
   padding: 20px;
+  min-height: calc(100vh - 82px)
 }
 
 .card-header {
