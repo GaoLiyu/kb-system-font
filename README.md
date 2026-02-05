@@ -1,60 +1,84 @@
-# 房地产估价知识库 - Web前端
+# KB Workspace
 
-Vue3 + TypeScript + Element Plus
+Web 前端与共用工具的单体/多包工作区，包含若干前端应用，采用 TypeScript、Vue3、Vite 构建。核心运行通过 Turbo 管理多包任务。
+
+## 目录结构
+
+- apps/kb-system: KB 系统前端单体应用
+- 其他子包（如有）按同样结构组织，均在 apps 目录下
+- package.json: 顶层工作区配置，定义了 dev/build/lint 等跨包命令
+- turbo 配置与各包的独立依赖
+
+## 运行前提
+
+- Node.js 版本: >= 20
+- pnpm 版本: >= 10
+- 后端 API 服务（对接点）: 代理到 http://127.0.0.1:5568（如前端应用使用 /api）
 
 ## 快速开始
 
+1. 安装依赖
+
 ```bash
-# 安装依赖
-npm install
-
-# 开发模式
-npm run dev
-
-# 构建
-npm run build
+pnpm install
 ```
 
-## 页面
+2. 启动开发服务器（全工作区）
 
-1. **知识库管理** `/kb`
-   - 查看统计信息
-   - 上传报告
-   - 删除报告
-   - 重建向量索引
-
-2. **案例搜索** `/search`
-   - 混合搜索（向量+规则）
-   - 语义搜索
-   - 字段搜索
-   - 查看案例详情
-
-## 配置
-
-### API代理
-
-开发模式下，Vite会将 `/api` 请求代理到 `http://localhost:8000`。
-
-修改 `vite.config.ts`：
-
-```ts
-proxy: {
-  '/api': {
-    target: 'http://localhost:8000',
-    changeOrigin: true,
-  },
-}
+```bash
+pnpm dev
 ```
 
-### Token
+或者只启动某个包，例如 kb-system
 
-在左侧边栏底部输入API Token进行认证。
+```bash
+pnpm --filter @kb/system dev
+```
 
-## 技术栈
+3. 构建与预览
 
-- Vue 3.4
-- TypeScript 5
-- Vue Router 4
-- Element Plus 2.4
-- Axios
-- Vite 5
+```bash
+pnpm build
+pnpm preview
+```
+
+4. 常见地址
+
+- 前端: http://localhost:3000
+- API 代理: /api 将请求转发到后端 http://localhost:5568
+
+## 启动单独应用（示例：kb-system）
+
+cd apps/kb-system
+pnpm install
+pnpm dev
+
+## 进阶用法
+
+- 使用筛选器执行指定包的命令，例如：
+  - pnpm --filter @kb/system dev
+  - pnpm --filter @kb/system build
+- 根工作区脚本依赖 Turbo，运行时请确保网络通畅以下载依赖。
+- 如后端地址或代理配置变更，请修改 apps/kb-system/vite.config.ts 的 proxy 设置或后端地址。
+
+## 架构与依赖简述
+
+- 前端：Vue 3 + TypeScript + Vite
+- 路由：vue-router
+- 状态：Pinia
+- UI：Element Plus
+- 自动导入：unplugin-auto-import
+- 全局配置、路由守卫、权限指令等均在源码中实现
+
+## 常见故障排查
+
+- 未安装 pnpm/Node 版本不符：请按前提条件升级
+- 端口冲突或代理无法访问后端：确认后端服务已启动且代理配置正确
+- 构建/类型检查错误：运行 `pnpm --filter @kb/system type-check` 查看类型问题
+
+## 贡献与约定
+
+- 本仓库使用 commitlint、lint-staged、prettier 保持提交风格与代码格式
+- 提交前请确保本地通过 ESLint/TS 检查，必要时在 CI 通过后再推送
+
+如需要，我可以继续扩展更多文档，例如 API 接口定义、组件/tutorial 级别的开发指南等。
