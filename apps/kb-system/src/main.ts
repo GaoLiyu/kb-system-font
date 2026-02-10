@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
+import ElementPlus, { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
@@ -14,7 +14,7 @@ import { setupPermissionDirectives } from './directives/permission'
 import { setupRouterGuards } from './router/guard'
 
 // 导入用户 store
-import { useUserStore } from './stores/user'
+import { useUserStore } from '@/stores'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -23,6 +23,11 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(ElementPlus, { locale: zhCn })
 app.use(router)
+
+app.config.errorHandler = (err, instance, info) => {
+  console.error('全局错误', err, info)
+  ElMessage.error('页面发生错误，请刷新重试')
+}
 
 // 注册权限指令
 setupPermissionDirectives(app)

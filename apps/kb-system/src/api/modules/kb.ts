@@ -2,6 +2,7 @@
  * 知识库接口
  */
 import api from '../request'
+import {PaginatedResponse} from "@/types";
 
 // 知识库统计
 export async function getKBStats() {
@@ -14,7 +15,7 @@ export async function getReports(params?: {
   keyword?: string
   page?: number
   page_size?: number
-}) {
+}): Promise<PaginatedResponse<Report>> {
   return api.get('/kb/reports', { params })
 }
 

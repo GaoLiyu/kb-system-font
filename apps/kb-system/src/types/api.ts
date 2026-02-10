@@ -1,62 +1,22 @@
 // 通用 API 响应类型
-import {Case} from "@/types/kb";
-import {ReviewTask} from "@/types/review";
 
 export interface ApiResponse<T = any> {
   success: boolean
   data?: T
   message?: string
+  timestamp?: string
   error?: string
 }
 
-export interface PaginatedResponse<T> {
-  success: boolean
-  total: number
-  page: number
-  page_size: number
-  total_pages: number
-  items: T[]
+export interface PaginatedResponse<T = any> extends BaseResponse {
+  data: T[]
+  pagination: PaginationMeta
 }
 
-// 分页响应
-export interface PaginatedResponse<T> {
-  success: boolean
-  total: number
-  page: number
-  page_size: number
-  total_pages: number
-  items: T[]
-}
-
-// 报告列表响应
-export interface ReportListResponse {
-  success: boolean
-  total: number
-  page: number
-  page_size: number
-  total_pages: number
-  reports: Report[]
-}
-
-// 案例列表响应
-export interface CaseListResponse {
-  success: boolean
-  total: number
-  page: number
-  page_size: number
-  total_pages: number
-  cases: Case[]
-}
-
-// 上传响应
-export interface UploadResponse {
-  success: boolean
-  doc_id: string
-  message?: string
-  report_type: string
-  address?: string
-  case_count?: number
-  error?: string
+export interface ErrorResponse extends BaseResponse {
+  success: false
+  error_code: string
+  detail?: any
 }
 
 // 搜索请求
@@ -68,13 +28,19 @@ export interface SearchRequest {
   top_k?: number
 }
 
-// 任务列表响应
-export interface ReviewTaskListResponse {
+export interface BaseResponse {
   success: boolean
-  tasks: ReviewTask[]
-  stats: {
-    total: number
-    by_status: Record<string, number>
-    by_risk: Record<string, number>
-  }
+  message: string
+  timestamp?: string
+}
+
+export interface DataResponse<T = any> extends BaseResponse {
+  data?: T
+}
+
+export interface PaginationMeta {
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
 }

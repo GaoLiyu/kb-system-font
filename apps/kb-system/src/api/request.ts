@@ -2,14 +2,14 @@
  * Axios 实例和拦截器配置
  */
 import axios from 'axios'
-import {ElMessage} from 'element-plus'
+import { ElMessage } from 'element-plus'
 import router from '@/router'
-import {getToken, removeToken} from "@/utils/auth";
+import { getToken, removeToken } from "@/utils/auth";
 
 // 创建 axios 实例
 const api = axios.create({
   baseURL: '/api',
-  timeout: 600000,
+  timeout: 30000,
 })
 
 // 防止重复跳转登录页的标志
@@ -26,10 +26,18 @@ api.interceptors.request.use((config) => {
 
 // 响应拦截器
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    const data = response.data
+    if (data && data.success === false) {
+      const msg = data.message || '请求失败'
+      ElMessage.error(msg)
+      return Promise.reject(new Error(msg))
+    }
+    return data
+  },
   (error) => {
     const status = error.response?.status
-    const msg = error.response?.data?.detail || error.message
+    const msg = error.response?.data?.detail || error.response?.data?.message || error.message
 
     // 401 未授权
     if (status === 401) {

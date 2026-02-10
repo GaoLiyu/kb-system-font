@@ -29,7 +29,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '@/api/request'
 
@@ -86,8 +85,8 @@ const table = useTable<AuditLog>({
     try {
       const res = await api.get('/audit/logs', { params })
       return {
-        items: res.logs || [],
-        total: res.total || 0
+        items: res.data.logs || [],
+        total: res.data.total || 0
       }
     } catch (error: any) {
       ElMessage.error(error?.response?.detail || '加载失败')

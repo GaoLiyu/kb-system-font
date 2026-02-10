@@ -88,13 +88,13 @@ const table = useTable<ReviewTask>({
     const res = await getReviewTasks(status, limit, offset)
 
     // 统计从 res.stats 来
-    stats.value = res.stats || {}
+    stats.value = res.data.stats || {}
 
     // total：优先 stats.total，没有就 fallback
-    const total = res.stats?.total ?? res.tasks?.length ?? 0
+    const total = res.data.stats?.total ?? res.data.tasks?.length ?? 0
 
     return {
-      items: res.tasks || [],
+      items: res.data.tasks || [],
       total,
     }
   },

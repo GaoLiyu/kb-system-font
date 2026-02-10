@@ -50,7 +50,10 @@ function checkPermission(el: HTMLElement, binding: DirectiveBinding) {
 
   if (!hasPermission) {
     // 移除元素
-    el.parentNode?.removeChild(el)
+    // el.parentNode?.removeChild(el)
+    el.style.display = 'none'
+  } else {
+    el.style.display = ''
   }
 }
 

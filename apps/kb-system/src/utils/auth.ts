@@ -1,15 +1,6 @@
 const TOKEN_KEY = 'api_token'
 
 export function getToken(): string | null {
-  const urlParams = new URLSearchParams(window.location.search)
-  const urlToken = urlParams.get('token')
-  if (urlToken) {
-    setToken(urlToken)
-    urlParams.delete('token')
-    const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '')
-    window.history.replaceState({}, '', newUrl)
-    return urlToken
-  }
   return localStorage.getItem(TOKEN_KEY)
 }
 
@@ -23,4 +14,17 @@ export function removeToken() {
 
 export function hasToken(): boolean {
   return !!getToken()
+}
+
+export function extractTokenFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search)
+  const token = urlParams.get('token')
+  if (token) {
+    setToken(token)
+    urlParams.delete('token')
+    const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '')
+    window.history.replaceState({}, '', newUrl)
+    return token
+  }
+  return null
 }

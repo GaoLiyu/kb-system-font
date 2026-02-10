@@ -8,8 +8,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/api/request'
-import { getToken, setToken, removeToken } from '@/api/request'
 import { logout as apiLogout } from '@/api/modules/user'
+import { getToken, removeToken, setToken } from "@/utils";
 
 // 用户信息接口
 export interface UserInfo {

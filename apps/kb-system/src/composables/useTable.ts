@@ -7,11 +7,12 @@ interface UseTableOptions<T> {
   fetchFn: (params: any) => Promise<{ items: T[], total: number }>
   deleteFn?: (id: string | number) => Promise<any>
   defaultPageSize?: number
+  idKey?: keyof T
 }
 
 
-export function useTable<T extends { id: string | number }>(options: UseTableOptions<T>) {
-  const { fetchFn, deleteFn, defaultPageSize = 20 } = options
+export function useTable<T extends Record<string, any>>(options: UseTableOptions<T>) {
+  const { fetchFn, deleteFn, defaultPageSize = 20, idKey = 'id' as keyof T } = options
 
   const list = ref<T[]>([]) as Ref<T[]>
   const { loading, withLoading } = useLoading()
@@ -30,8 +31,8 @@ export function useTable<T extends { id: string | number }>(options: UseTableOpt
         ...extraParams,
       }
       const res = await fetchFn(params)
-      list.value = res.items
-      pagination.setTotal(res.total)
+      list.value = res.data || res.items || []
+      pagination.setTotal(res.pagination?.total || res.total || 0)
     })
   }
 
@@ -41,7 +42,8 @@ export function useTable<T extends { id: string | number }>(options: UseTableOpt
   }
 
   async function handleDelete(row: T, confirmText = '确定删除吗？') {
-    if (!deleteFn || !row.id) return
+    const rowId = row[idKey]
+    if (!deleteFn || !rowId) return
 
     try {
       await ElMessageBox.confirm(confirmText, '提示', {
@@ -54,7 +56,7 @@ export function useTable<T extends { id: string | number }>(options: UseTableOpt
     }
 
     await withLoading(async () => {
-      await deleteFn(row.id)
+      await deleteFn(rowId as string | number)
     })
 
     ElMessage.success('删除成功')

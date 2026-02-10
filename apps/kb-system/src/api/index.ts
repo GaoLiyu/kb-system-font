@@ -4,7 +4,7 @@
 
 // 导出 request 工具
 export { default as api } from './request'
-export { getToken, setToken, removeToken } from './request'
+export { getToken, setToken, removeToken } from '@/utils/auth'
 
 // 导出所有模块接口
 export * from './modules/kb'
@@ -12,6 +12,8 @@ export * from './modules/review'
 export * from './modules/search'
 export * from './modules/stats'
 export * from './modules/generate'
+export * from './modules/user'
+export * from './modules/audit'
 
 // 下载文件辅助函数
 export function downloadBlob(blob: Blob, filename: string) {
